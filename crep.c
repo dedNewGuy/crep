@@ -3,7 +3,7 @@
 
 int main(void)
 {
-	const char *path = "sample.txt";
+	const char *path = "./sample.txt";
 
     Min_String_Builder sb = {0};
 	if (!min_read_entire_file(path, &sb)) return 1;
@@ -12,7 +12,7 @@ int main(void)
 
 	min_log(MIN_LOG, "Starting search...");
 
-	char *input = "year";
+	char *input = "Etext";
 	size_t in_len = strlen(input);
 	size_t idx = 0;
 	int at_line = 0;
@@ -30,7 +30,18 @@ int main(void)
 		}
 		if (c == input[idx]) {
 			if (idx == in_len - 1) {
-				printf("%s:%d:%d:note\n", path, at_line + 1, at_col - (int)in_len + 2);
+				int last_char_at = char_at;
+				while (sb.items[last_char_at - 1] != '\n' && last_char_at > 0) {
+					last_char_at--;
+				}
+				char line_content[1024] = "\0";
+				int lc_idx = 0;
+				while (sb.items[last_char_at] != '\n' && last_char_at < (int)sb.count) {
+					line_content[lc_idx++] = sb.items[last_char_at];
+					last_char_at++;
+				}
+				line_content[++lc_idx] = '\0';
+				printf("%s:%d:%d:%s\n", path, at_line + 1, at_col - (int)in_len + 2, line_content);
 				idx = 0;
 			} else idx++;
 		} else if (idx != 0) {

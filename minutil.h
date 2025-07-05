@@ -9,6 +9,7 @@
 #include <stdbool.h>
 
 #define MIN_REALLOC realloc
+#define MIN_MALLOC malloc
 #define MIN_ASSERT assert
 #define MIN_FREE free
 #define min_return_defer(value) do { result = (value); goto defer; } while(0); \

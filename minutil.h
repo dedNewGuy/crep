@@ -69,7 +69,7 @@ typedef struct {
 #define min_sb_append_buf(sb, buf, buf_size) min_da_append_many(sb, buf, buf_size)
 #define min_free_sb(sb) MIN_FREE(sb.items)
 
-bool min_read_file(const char *path, Min_String_Builder *sb)
+bool min_read_entire_file(const char *path, Min_String_Builder *sb)
 {
 	bool result = true;
 	size_t buf_size = 32 * 1024;

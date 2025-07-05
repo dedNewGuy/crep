@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-
+#define MIN_REALLOC realloc
 #define MIN_ASSERT assert
 #define MIN_FREE free
 #define min_return_defer(value) do { result = (value); goto defer; } while(0); \
@@ -40,16 +40,32 @@ void min_log(Min_Log_Level log_level, const char *fmt, ...)
 	fprintf(stderr, "\n");
 }
 
+#define MIN_DA_INIT_CAP 256
+
+#define min_da_append_many(da, new_items, new_items_count)				\
+	do {																\
+		if ((da)->count + new_items_count > (da)->capacity) {			\
+			if ((da)->capacity == 0) {									\
+				(da)->capacity = MIN_DA_INIT_CAP;						\
+			}															\
+			while ((da)->count + new_items_count > (da)->capacity) {	\
+				(da)->capacity *= 2;									\
+			}															\
+			(da)->items = MIN_REALLOC((da)->items, (da)->capacity*sizeof(*(da)->items)); \
+			MIN_ASSERT((da)->items != NULL && "NOT ENOUGH MEMORY");		\
+		}																\
+		memcpy((da)->items + (da)->count, new_items, new_items_count*sizeof(*(da)->items));	\
+		(da)->count += new_items_count;									\
+	} while (0)															\
+
 typedef struct {
 	char *items;
 	size_t count;
 	size_t capacity;
 } Min_String_Builder;
 
-void min_sb_append(Min_String_Builder *sb, char *item)
-{
-	
-}
+#define min_sb_append_buf(sb, buf, buf_size) min_da_append_many(sb, buf, buf_size)
+#define min_free_sb(sb) MIN_FREE(sb.items)
 
 bool min_read_file(const char *path, Min_String_Builder *sb)
 {
@@ -63,9 +79,9 @@ bool min_read_file(const char *path, Min_String_Builder *sb)
 		min_return_defer(false);
 	}
 
-	size_t n = fread(buf, 1, buf_size, file); 
+	size_t n = fread(buf, 1, buf_size, file);
 	while (n > 0) {
-		printf("%s", buf);
+		min_sb_append_buf(sb, buf, n);
 		n = fread(buf, 1, buf_size, file); 
 	}
 	if (ferror(file)) {
@@ -81,10 +97,14 @@ bool min_read_file(const char *path, Min_String_Builder *sb)
 
 int main(void)
 {
-	const char *path = "sample-1.txt";
+	const char *path = "shakespear-smol.txt";
 
-    Min_String_Builder buf = {0};
-	if (!min_read_file(path, &buf)) return 1;
+    Min_String_Builder sb = {0};
+	if (!min_read_file(path, &sb)) return 1;
 
+	min_log(MIN_LOG, "Count: %d, Capacity: %d", sb.count, sb.capacity);
+	printf("%s\n", sb.items);
+	
+	min_free_sb(sb);
 	return 0;
 }

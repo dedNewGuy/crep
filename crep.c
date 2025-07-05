@@ -3,7 +3,7 @@
 
 int main(void)
 {
-	const char *path = "./sample.txt";
+	const char *path = "sample.txt";
 
     Min_String_Builder sb = {0};
 	if (!min_read_entire_file(path, &sb)) return 1;
@@ -12,7 +12,7 @@ int main(void)
 
 	min_log(MIN_LOG, "Starting search...");
 	int at_line = 0;
-	char *input = "this";
+	char *input = "is";
 	size_t idx = 0;
 	size_t char_at = 0;
 	while (char_at < sb.count) {
@@ -25,7 +25,7 @@ int main(void)
 		}
 		if (c == input[idx]) {
 			if (idx == strlen(input) - 1) {
-				printf("%d\n", at_line + 1);
+				fprintf(stderr, "%s:%d::\n", path, at_line + 1);
 				idx = 0;
 			} else idx++;
 		} else if (idx != 0) {

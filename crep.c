@@ -12,7 +12,8 @@ int main(void)
 
 	min_log(MIN_LOG, "Starting search...");
 
-	char *input = "is";
+	char *input = "year";
+	size_t in_len = strlen(input);
 	size_t idx = 0;
 	int at_line = 0;
 	int at_col = 0;
@@ -28,8 +29,8 @@ int main(void)
 			continue;
 		}
 		if (c == input[idx]) {
-			if (idx == strlen(input) - 1) {
-				fprintf(stderr, "%s:%d:%d:note\n", path, at_line + 1, at_col);
+			if (idx == in_len - 1) {
+				printf("%s:%d:%d:note\n", path, at_line + 1, at_col - (int)in_len + 2);
 				idx = 0;
 			} else idx++;
 		} else if (idx != 0) {

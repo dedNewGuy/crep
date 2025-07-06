@@ -15,6 +15,10 @@ typedef struct {
 
 void get_line_content(Min_String_Builder sb, Text_Pointer tp, char buf[])
 {
+	// TODO: If target is on the same line, it read the same line twice.. okay for now
+	// Later maybe need to add some sort of data structure to keep already read line
+	// Hash table? for now it's overkill I guess. Want to focus on implementing
+	// string matching algorithm first
 	size_t start = tp.start_line;
 	size_t lc_idx = 0;
 	while (sb.items[start] != '\n' && start < sb.count) {
@@ -56,6 +60,7 @@ void naive_string_matching(Min_String_Builder sb, Text_Pointer *tp, const char *
 
 int main(void)
 {
+	// TODO: Make it usable as command line tool for later
 	Text_Pointer tp = {0};
 	tp.path = "./sample.txt";
 	tp.at_col = 1;
@@ -66,7 +71,7 @@ int main(void)
 	min_log(MIN_LOG, "Count: %d, Capacity: %d", sb.count, sb.capacity);
 	min_log(MIN_LOG, "Starting search...");
 
-	const char *input = "text";
+	const char *input = "ed";
 
 	naive_string_matching(sb, &tp, input);
 

@@ -1,57 +1,76 @@
 #include <stdio.h>
 #include "minutil.h"
 
-int main(void)
+// Offset by (int)input_len + 1 to point to the first character
+// of the input
+#define print_loc(path, line, col, input_len, buf)\
+	printf("%s:%d:%d:%s\n", path, line + 1, col - (int)input_len + 1, buf);\
+
+typedef struct {
+	const char *path;
+	int start_line;
+	int at_line;
+	int at_col;
+} Text_Pointer;
+
+void get_line_content(Min_String_Builder sb, Text_Pointer tp, char buf[])
 {
-	const char *path = "./sample.txt";
+	size_t start = tp.start_line;
+	size_t lc_idx = 0;
+	while (sb.items[start] != '\n' && start < sb.count) {
+		buf[lc_idx++] = sb.items[start];
+		start++;
+	}
+	buf[lc_idx] = '\0';
+}
 
-    Min_String_Builder sb = {0};
-	if (!min_read_entire_file(path, &sb)) return 1;
-
-	min_log(MIN_LOG, "Count: %d, Capacity: %d", sb.count, sb.capacity);
-
-	min_log(MIN_LOG, "Starting search...");
-
-	char *input = "Etext";
+void naive_string_matching(Min_String_Builder sb, Text_Pointer *tp, const char *input)
+{
 	size_t in_len = strlen(input);
-	size_t idx = 0;
-	int at_line = 0;
-	int at_col = 0;
-
-	size_t char_at = 0;
-	while (char_at < sb.count) {
+	int idx = 0;
+	int char_at = 0;
+	while (char_at < (int)sb.count) {
 		char c = sb.items[char_at];
-		// min_log(MIN_LOG, "Comparing %c & %c", c, input[idx]);
 		if (c == '\n') {
-			at_line = at_line + 1;
-			at_col = 0;
+			tp->at_line = tp->at_line + 1;
+			tp->at_col = 1;
 			char_at++;
+			tp->start_line = char_at;
 			continue;
 		}
 		if (c == input[idx]) {
-			if (idx == in_len - 1) {
-				int last_char_at = char_at;
-				while (sb.items[last_char_at - 1] != '\n' && last_char_at > 0) {
-					last_char_at--;
-				}
+			if (idx == (int)in_len - 1) {
 				char line_content[1024] = "\0";
-				int lc_idx = 0;
-				while (sb.items[last_char_at] != '\n' && last_char_at < (int)sb.count) {
-					line_content[lc_idx++] = sb.items[last_char_at];
-					last_char_at++;
-				}
-				line_content[++lc_idx] = '\0';
-				printf("%s:%d:%d:%s\n", path, at_line + 1, at_col - (int)in_len + 2, line_content);
+				get_line_content(sb, *tp, line_content);
+				print_loc(tp->path, tp->at_line, tp->at_col, in_len, line_content);
 				idx = 0;
 			} else idx++;
 		} else if (idx != 0) {
 			idx = 0;
 			continue;
 		}
-		at_col++;
+		tp->at_col++;
 		char_at++;
 	}
+}
+
+int main(void)
+{
+	Text_Pointer tp = {0};
+	tp.path = "./sample.txt";
+	tp.at_col = 1;
+
+    Min_String_Builder sb = {0};
+	if (!min_read_entire_file(tp.path, &sb)) return 1;
+
+	min_log(MIN_LOG, "Count: %d, Capacity: %d", sb.count, sb.capacity);
+	min_log(MIN_LOG, "Starting search...");
+
+	const char *input = "text";
+
+	naive_string_matching(sb, &tp, input);
+
 	min_free_sb(sb);
-	min_log(MIN_LOG, "Total Line: %d", at_line);
+	min_log(MIN_LOG, "Total Line: %d", tp.at_line);
 	return 0;
 }

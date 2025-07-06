@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "minutil.h"
 
 // Offset by (int)input_len + 1 to point to the first character
@@ -58,6 +59,30 @@ void naive_string_matching(Min_String_Builder sb, Text_Pointer *tp, const char *
 	}
 }
 
+void construct_dfa(const char *pattern)
+{
+	size_t n_possible_input = 95;
+	size_t pat_len = strlen(pattern);
+	size_t n_state = pat_len + 1;
+	int ascii_offset = 32;
+	int dfa_table[n_state][n_possible_input];
+	memset(dfa_table, 0, sizeof(dfa_table[0][0]) * n_state * n_possible_input);
+
+	for (size_t i = 0; i < pat_len; ++i) {
+		int ascii = (int)pattern[i] - ascii_offset;
+		min_log(MIN_LOG, "ASCII: %d", ascii);
+		dfa_table[i][ascii] = i + 1;
+	}
+
+	for (size_t i = 0; i < n_state; ++i) {
+		for (size_t j = 0; j < n_possible_input; ++j) {
+			printf("%d ", dfa_table[i][j]);
+		}
+		printf("\n");
+	}
+
+}
+
 int main(void)
 {
 	// TODO: Make it usable as command line tool for later
@@ -73,7 +98,7 @@ int main(void)
 
 	const char *input = "ed";
 
-	naive_string_matching(sb, &tp, input);
+	construct_dfa(input);
 
 	min_free_sb(sb);
 	min_log(MIN_LOG, "Total Line: %d", tp.at_line);

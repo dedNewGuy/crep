@@ -45,6 +45,17 @@ void min_log(Min_Log_Level log_level, const char *fmt, ...)
 
 #define MIN_DA_INIT_CAP 256
 
+#define da_append(da, item)												\
+	do {																\
+		if ((da)->count >= (da)->cap) {									\
+			(da)->cap = (da)->cap == 0 ? MIN_DA_INIT_CAP : 2*(da)->cap;	\
+			(da)->items = realloc((da)->items, (da)->cap*sizeof(*(da)->items)); \
+			assert((da)->items != NULL && "Not enough memory");			\
+		}																\
+		(da)->items[(da)->count++] = item;								\
+	} while(0)															\
+
+
 #define min_da_append_many(da, new_items, new_items_count)				\
 	do {																\
 		if ((da)->count + new_items_count > (da)->capacity) {			\

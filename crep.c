@@ -61,19 +61,25 @@ void naive_string_matching(Min_String_Builder sb, Text_Pointer *tp, const char *
 
 void construct_dfa(const char *pattern)
 {
-	size_t n_possible_input = 95;
+	size_t n_possible_input = 126;
 	size_t pat_len = strlen(pattern);
 	size_t n_state = pat_len + 1;
-	int ascii_offset = 32;
 	int dfa_table[n_state][n_possible_input];
 	memset(dfa_table, 0, sizeof(dfa_table[0][0]) * n_state * n_possible_input);
+	dfa_table[0][(int)pattern[0]] = 1;
 
-	for (size_t i = 0; i < pat_len; ++i) {
-		int ascii = (int)pattern[i] - ascii_offset;
-		min_log(MIN_LOG, "ASCII: %d", ascii);
-		dfa_table[i][ascii] = i + 1;
+	size_t x = 0;
+	for (size_t q = 1; q < n_state; ++q) {
+		for (size_t i = 0; i < n_possible_input; ++i) {
+			dfa_table[q][i] = dfa_table[x][i];
+		}
+		if (q < n_state - 1) {
+			dfa_table[q][(int)pattern[q]] = q + 1;
+		}
+		x = dfa_table[q][(int)pattern[q]];
 	}
 
+	// Print the table
 	for (size_t i = 0; i < n_state; ++i) {
 		for (size_t j = 0; j < n_possible_input; ++j) {
 			printf("%d ", dfa_table[i][j]);
@@ -96,9 +102,9 @@ int main(void)
 	min_log(MIN_LOG, "Count: %d, Capacity: %d", sb.count, sb.capacity);
 	min_log(MIN_LOG, "Starting search...");
 
-	const char *input = "ed";
+	const char *pattern = "anpanman";
 
-	construct_dfa(input);
+	construct_dfa(pattern);
 
 	min_free_sb(sb);
 	min_log(MIN_LOG, "Total Line: %d", tp.at_line);

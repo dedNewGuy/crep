@@ -102,6 +102,8 @@ Occ dfa_string_matcher(const char *pattern, Min_String_Builder sb)
 
 	Occ occ = {0};
 
+	// TODO: Handle line numbers and columns number in the actual text
+	// Basically add a workaround for the Text_Pointer
 	size_t state = 0;
 	for (size_t i = 0; i < sb.count; ++i) {
 		int code = (int)sb.items[i];

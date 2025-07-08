@@ -59,12 +59,9 @@ void naive_string_matching(Min_String_Builder sb, Text_Pointer *tp, const char *
 	}
 }
 
-void construct_dfa(const char *pattern)
+void construct_dfa(const char *pattern, size_t n_possible_input, size_t n_state,
+				   int dfa_table[n_state][n_possible_input])
 {
-	size_t n_possible_input = 126;
-	size_t pat_len = strlen(pattern);
-	size_t n_state = pat_len + 1;
-	int dfa_table[n_state][n_possible_input];
 	memset(dfa_table, 0, sizeof(dfa_table[0][0]) * n_state * n_possible_input);
 	dfa_table[0][(int)pattern[0]] = 1;
 
@@ -80,13 +77,42 @@ void construct_dfa(const char *pattern)
 	}
 
 	// Print the table
-	for (size_t i = 0; i < n_state; ++i) {
-		for (size_t j = 0; j < n_possible_input; ++j) {
-			printf("%d ", dfa_table[i][j]);
+	/* for (size_t i = 0; i < n_state; ++i) { */
+	/* 	for (size_t j = 0; j < n_possible_input; ++j) { */
+	/* 		printf("%d ", dfa_table[i][j]); */
+	/* 	} */
+	/* 	printf("\n"); */
+	/* } */
+
+}
+
+typedef struct {
+	int *items;
+	size_t count;
+	size_t cap;
+} Occ;
+
+Occ dfa_string_matcher(const char *pattern, Min_String_Builder sb)
+{
+	size_t ascii_count = 126;
+	size_t pat_len = strlen(pattern);
+	size_t n_state = pat_len + 1;
+	int dfa_table[n_state][ascii_count];
+	construct_dfa(pattern, ascii_count, n_state, dfa_table);
+
+	Occ occ = {0};
+
+	size_t state = 0;
+	for (size_t i = 0; i < sb.count; ++i) {
+		int code = (int)sb.items[i];
+	    state = dfa_table[state][code];
+		if (state == pat_len) {
+			int curr_occ = i - pat_len + 1;
+			da_append(&occ, curr_occ);
 		}
-		printf("\n");
 	}
 
+	return occ;
 }
 
 int main(void)
@@ -102,9 +128,15 @@ int main(void)
 	min_log(MIN_LOG, "Count: %d, Capacity: %d", sb.count, sb.capacity);
 	min_log(MIN_LOG, "Starting search...");
 
-	const char *pattern = "anpanman";
+	const char *pattern = "Gutenberg";
 
-	construct_dfa(pattern);
+	Occ occ = dfa_string_matcher(pattern, sb);
+
+	for (size_t i = 0; i < occ.count; ++i) {
+		printf("Occ: %d\n", occ.items[i]);
+	}
+
+	printf("Col 50: %c\n", sb.items[50]);
 
 	min_free_sb(sb);
 	min_log(MIN_LOG, "Total Line: %d", tp.at_line);

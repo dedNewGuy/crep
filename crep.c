@@ -23,7 +23,8 @@ void get_line_content(Min_String_Builder sb, Text_Pointer tp, char buf[])
 	// Hash table? for now it's overkill I guess. Want to focus on implementing
 	// string matching algorithm first
 
-	// [NOTE] ONLY USED BY Naive implementation
+	// [NOTE] ONLY USED BY Naive implementation. This function is not use anymore
+	// since I don't use naive implementation but merely as a reference for me in the future
 	size_t start = tp.start_line;
 	size_t lc_idx = 0;
 	while (sb.items[start] != '\n' && start < sb.count) {

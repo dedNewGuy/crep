@@ -92,7 +92,7 @@ typedef struct {
 	size_t cap;
 } Occ;
 
-Occ dfa_string_matcher(const char *pattern, Min_String_Builder sb)
+Occ dfa_string_matcher(const char *pattern, Min_String_Builder sb, Text_Pointer *tp)
 {
 	size_t ascii_count = 126;
 	size_t pat_len = strlen(pattern);
@@ -106,12 +106,17 @@ Occ dfa_string_matcher(const char *pattern, Min_String_Builder sb)
 	// Basically add a workaround for the Text_Pointer
 	size_t state = 0;
 	for (size_t i = 0; i < sb.count; ++i) {
-		int code = (int)sb.items[i];
-	    state = dfa_table[state][code];
+		char ch = sb.items[i];
+	    state = dfa_table[state][(int)ch];
 		if (state == pat_len) {
-			int curr_occ = i - pat_len + 1;
-			da_append(&occ, curr_occ);
+			printf("%s:%d:%zu:note\n", tp->path, tp->at_line, tp->at_col - pat_len + 1);			
+			da_append(&occ, tp->at_col - pat_len + 1);
 		}
+		if (ch == '\n') {
+			tp->at_line++;
+			tp->at_col = 0;
+		}
+		tp->at_col++;
 	}
 
 	return occ;
@@ -122,6 +127,7 @@ int main(void)
 	// TODO: Make it usable as command line tool for later
 	Text_Pointer tp = {0};
 	tp.path = "./sample.txt";
+	tp.at_line = 1;	
 	tp.at_col = 1;
 
     Min_String_Builder sb = {0};
@@ -132,13 +138,11 @@ int main(void)
 
 	const char *pattern = "Gutenberg";
 
-	Occ occ = dfa_string_matcher(pattern, sb);
+	Occ occ = dfa_string_matcher(pattern, sb, &tp);
 
 	for (size_t i = 0; i < occ.count; ++i) {
 		printf("Occ: %d\n", occ.items[i]);
 	}
-
-	printf("Col 50: %c\n", sb.items[50]);
 
 	min_free_sb(sb);
 	min_log(MIN_LOG, "Total Line: %d", tp.at_line);

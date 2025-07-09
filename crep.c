@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <ctype.h>
 #include "minutil.h"
 
 // Offset by (int)input_len + 1 to point to the first character
@@ -103,8 +104,10 @@ void dfa_string_matcher(size_t pat_len, size_t n_possible_input, int (*dfa_table
 	memset(buf, 0, buf_len);
 	for (size_t i = 0; i < sb.count; ++i, tp->at_col++) {
 		char ch = sb.items[i];
+		int code = (int)ch;
+		if (code < 0 || code >= (int)n_possible_input) continue;
 		buf[tp->at_col - 1] = ch;
-	    state = dfa_table[state][(int)ch];
+	    state = dfa_table[state][code];
 		if (state == pat_len) {
 			if (!is_read) {
 				size_t tmp_i = i;
@@ -153,6 +156,6 @@ int main(int argc, char **argv)
 		/* naive_string_matching(sb, &tp, pattern);*/
 		min_free_sb(sb);
 	}
-	
+
 	return 0;
 }

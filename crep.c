@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "minutil.h"
 
 // Offset by (int)input_len + 1 to point to the first character
@@ -97,25 +98,30 @@ void dfa_string_matcher(const char *pattern, Min_String_Builder sb, Text_Pointer
 	size_t state = 0;
 	size_t buf_len = 2 * 1024;
 	char buf[buf_len];
+	bool is_read = false;
 	memset(buf, 0, buf_len);
 	for (size_t i = 0; i < sb.count; ++i, tp->at_col++) {
 		char ch = sb.items[i];
-		buf[tp->at_col - 1] = ch;		
+		buf[tp->at_col - 1] = ch;
 	    state = dfa_table[state][(int)ch];
 		if (state == pat_len) {
-			size_t tmp_i = i;
-			size_t tmp_at_col = tp->at_col - 1; 			
-			while (sb.items[tmp_i] != '\n') {
-				buf[tmp_at_col] = sb.items[tmp_i];
-				tmp_i++;
-			    tmp_at_col++;
+			if (!is_read) {
+				size_t tmp_i = i;
+				size_t tmp_at_col = tp->at_col - 1; 			
+				while (sb.items[tmp_i] != '\n') {
+					buf[tmp_at_col] = sb.items[tmp_i];
+					tmp_i++;
+					tmp_at_col++;
+				}
+				buf[tmp_at_col] = '\0';
+				is_read = true;
 			}
-			buf[tmp_at_col] = '\0';
 			printf("%s:%d:%zu:%s\n", tp->path, tp->at_line, tp->at_col - pat_len + 1, buf);
 		}
 		if (ch == '\n') {
 			tp->at_line++;
 			tp->at_col = 0;
+			is_read = false;
 			memset(buf, 0, buf_len);
 		}
 	}
@@ -135,11 +141,10 @@ int main(void)
 	min_log(MIN_LOG, "Count: %d, Capacity: %d", sb.count, sb.capacity);
 	min_log(MIN_LOG, "Starting search...");
 
-	const char *pattern = "dol";
+	const char *pattern = "this";
 
     dfa_string_matcher(pattern, sb, &tp);
 
 	min_free_sb(sb);
-	min_log(MIN_LOG, "Total Line: %d", tp.at_line - 1);
 	return 0;
 }

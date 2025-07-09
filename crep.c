@@ -86,47 +86,46 @@ void construct_dfa(const char *pattern, size_t n_possible_input, size_t n_state,
 
 }
 
-typedef struct {
-	int *items;
-	size_t count;
-	size_t cap;
-} Occ;
-
-Occ dfa_string_matcher(const char *pattern, Min_String_Builder sb, Text_Pointer *tp)
+void dfa_string_matcher(const char *pattern, Min_String_Builder sb, Text_Pointer *tp)
 {
-	size_t ascii_count = 126;
+	size_t ascii_count = 127;
 	size_t pat_len = strlen(pattern);
 	size_t n_state = pat_len + 1;
 	int dfa_table[n_state][ascii_count];
 	construct_dfa(pattern, ascii_count, n_state, dfa_table);
 
-	Occ occ = {0};
-
-	// TODO: Handle line numbers and columns number in the actual text
-	// Basically add a workaround for the Text_Pointer
 	size_t state = 0;
-	for (size_t i = 0; i < sb.count; ++i) {
+	size_t buf_len = 2 * 1024;
+	char buf[buf_len];
+	memset(buf, 0, buf_len);
+	for (size_t i = 0; i < sb.count; ++i, tp->at_col++) {
 		char ch = sb.items[i];
+		buf[tp->at_col - 1] = ch;		
 	    state = dfa_table[state][(int)ch];
 		if (state == pat_len) {
-			printf("%s:%d:%zu:note\n", tp->path, tp->at_line, tp->at_col - pat_len + 1);			
-			da_append(&occ, tp->at_col - pat_len + 1);
+			size_t tmp_i = i;
+			size_t tmp_at_col = tp->at_col - 1; 			
+			while (sb.items[tmp_i] != '\n') {
+				buf[tmp_at_col] = sb.items[tmp_i];
+				tmp_i++;
+			    tmp_at_col++;
+			}
+			buf[tmp_at_col] = '\0';
+			printf("%s:%d:%zu:%s\n", tp->path, tp->at_line, tp->at_col - pat_len + 1, buf);
 		}
 		if (ch == '\n') {
 			tp->at_line++;
 			tp->at_col = 0;
+			memset(buf, 0, buf_len);
 		}
-		tp->at_col++;
 	}
-
-	return occ;
 }
 
 int main(void)
 {
 	// TODO: Make it usable as command line tool for later
 	Text_Pointer tp = {0};
-	tp.path = "./sample.txt";
+	tp.path = "shakespear-smol.txt";
 	tp.at_line = 1;	
 	tp.at_col = 1;
 
@@ -136,15 +135,11 @@ int main(void)
 	min_log(MIN_LOG, "Count: %d, Capacity: %d", sb.count, sb.capacity);
 	min_log(MIN_LOG, "Starting search...");
 
-	const char *pattern = "Gutenberg";
+	const char *pattern = "dol";
 
-	Occ occ = dfa_string_matcher(pattern, sb, &tp);
-
-	for (size_t i = 0; i < occ.count; ++i) {
-		printf("Occ: %d\n", occ.items[i]);
-	}
+    dfa_string_matcher(pattern, sb, &tp);
 
 	min_free_sb(sb);
-	min_log(MIN_LOG, "Total Line: %d", tp.at_line);
+	min_log(MIN_LOG, "Total Line: %d", tp.at_line - 1);
 	return 0;
 }
